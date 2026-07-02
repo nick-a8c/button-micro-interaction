@@ -55,7 +55,7 @@
     cursor:pointer;
     user-select:none;
   }
-  .o2-btn:active{transform:scale(.97);}
+  .o2-btn:active{transform:scale(var(--press,0.96));}   /* press = uniform scale-down (viewed from straight above); depth tunable in Label FX */
 
   .o2-btn .ico{display:inline-flex;align-items:center;justify-content:center;}
   .o2-btn svg{display:block;}
@@ -74,7 +74,7 @@
   #tuner-toggle{top:16px;}
   #tuner-toggle-follow{top:54px;}
   #tuner-toggle-like{top:92px;}
-  .tuner{position:fixed;top:130px;right:16px;width:284px;max-height:80vh;overflow:auto;
+  .tuner{position:fixed;top:130px;right:16px;width:284px;max-height:600px;overflow:auto;box-sizing:border-box;
     background:#fff;border:1px solid #d5d8dc;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.12);
     padding:14px 16px;font-size:12px;color:#1e1e1e;z-index:9999;}
   .tuner[hidden]{display:none;}
@@ -117,8 +117,16 @@
     background:#d9d9d9;
   }
   .avatars img:first-child{margin-left:0;}
-  .likes-count{color:var(--blue);font-size:13px;font-weight:500;text-decoration:none;}
+  .likes-count{color:var(--blue);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;}
   .likes-count:hover{text-decoration:underline;}
+  /* likers dropdown (click the count) */
+  .likes-pop{position:absolute;top:100%;left:0;margin-top:8px;width:252px;max-height:280px;overflow-y:auto;
+    background:#fff;border:1px solid #dcdcde;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.16);z-index:10001;padding:6px 0;}
+  .likes-pop[hidden]{display:none;}
+  .likes-pop-h{font-size:13px;font-weight:600;color:#1e1e1e;padding:8px 16px 10px;}
+  .lp-row{display:flex;align-items:center;gap:12px;padding:7px 16px;font-size:14px;color:#1e1e1e;}
+  .lp-row:hover{background:#f2f5f7;}
+  .lp-row img{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#d9d9d9;flex:none;}
 
   /* ---------- divider ---------- */
   .o2-rule{
@@ -246,7 +254,8 @@
   #tuner-toggle-follow{top:138px;}
   #tuner-toggle-like{top:176px;}
   #tuner-toggle-avatars{top:214px;}
-  .tuner{top:252px;}
+  #tuner-toggle-labelfx{top:252px;}
+  .tuner{top:290px;}
 </style>
 </head>
 <body>
@@ -365,6 +374,29 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+<script>
+// Fluid label swaps: when a toggle button's text changes, stretch its width old→new
+// (elastic ease) instead of snapping. No morph — just the pill resizing with motion.
+window.STRETCH={ ms:260, bounce:1.35 };             // tunable via the "Label FX" panel
+window.stretchBtn=function(btn, mutate){
+  var S=window.STRETCH;
+  var oldW=btn.offsetWidth;                         // border-box width, ignores :active transform
+  mutate();                                         // swap the label text
+  var pbox=btn.style.boxSizing;
+  btn.style.boxSizing='border-box'; btn.style.width='auto';
+  var newW=btn.offsetWidth;                         // natural width with the new text
+  if(Math.abs(newW-oldW)<0.5){ btn.style.boxSizing=pbox; btn.style.width=''; return; }
+  btn.style.width=oldW+'px'; btn.style.overflow='hidden';
+  void btn.offsetWidth;                             // lock the start width
+  btn.style.transition='width '+S.ms+'ms cubic-bezier(.34,'+S.bounce+',.5,1)';   // bounce = overshoot
+  btn.style.width=newW+'px';
+  if(btn._stretchDone) btn.removeEventListener('transitionend', btn._stretchDone);
+  btn._stretchDone=function(e){ if(e.propertyName!=='width') return;
+    btn.style.transition=''; btn.style.width=''; btn.style.overflow=''; btn.style.boxSizing=pbox;
+    btn.removeEventListener('transitionend', btn._stretchDone); btn._stretchDone=null; };
+  btn.addEventListener('transitionend', btn._stretchDone);
+};
+</script>
 <script id="reply-data" type="application/json">{"v":"5.12.1","fr":30,"ip":44,"op":91,"w":65,"h":65,"nm":"Reply hover 1 - isolated","ddd":0,"assets":[{"id":"comp_0","nm":"reply hover 1","fr":30,"layers":[{"ddd":0,"ind":2,"ty":3,"nm":"NULL CONTROL 2","sr":1,"ks":{"o":{"a":0,"k":0,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[189.795,133.698,0],"ix":2,"l":2},"a":{"a":0,"k":[50,50,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"ip":0,"op":308,"st":0,"bm":0},{"ddd":0,"ind":3,"ty":4,"nm":"mask","td":1,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[127.558,135.196,0],"ix":2,"l":2},"a":{"a":0,"k":[0,0,0],"ix":1,"l":2},"s":{"a":0,"k":[100,63.748,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ty":"rc","d":1,"s":{"a":0,"k":[69.116,57.893],"ix":2},"p":{"a":0,"k":[0,0],"ix":3},"r":{"a":0,"k":0,"ix":4},"nm":"Rectangle Path 1","mn":"ADBE Vector Shape - Rect","hd":false},{"ty":"fl","c":{"a":0,"k":[0.882323979396,0.882323979396,0.882323979396,1],"ix":4},"o":{"a":0,"k":100,"ix":5},"r":1,"bm":0,"nm":"Fill 1","mn":"ADBE Vector Graphic - Fill","hd":false},{"ty":"tr","p":{"a":0,"k":[0,0],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Rectangle 1","np":3,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":316,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":4,"ty":4,"nm":"in","parent":2,"tt":1,"tp":3,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":1,"k":[{"i":{"x":0,"y":1},"o":{"x":0,"y":0},"t":55,"s":[-17.037,55.217,0],"to":[0,0,0],"ti":[0,0,0]},{"t":73,"s":[-7.037,55.217,0]}],"ix":2,"l":2},"a":{"a":0,"k":[-329.625,77.875,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,0],[0,12.5],[-9.75,0],[0,0]],"o":[[0,0],[0,-12.5],[9.75,0],[0,0]],"v":[[-347.227,162.189],[-347.237,83.84],[-332.5,69.75],[-246.739,69.774]],"c":false},"ix":2},"nm":"Path 2","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":86,"s":[0.019607843831,0.529411792755,0.866666674614,1]},{"t":88,"s":[0.235290527344,0.262756347656,0.290191650391,1]}],"ix":3},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":4,"ix":5},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tm","s":{"a":0,"k":41.6,"ix":1},"e":{"a":0,"k":65,"ix":2},"o":{"a":1,"k":[{"i":{"x":[0.115],"y":[1]},"o":{"x":[0.129],"y":[0]},"t":55,"s":[-119]},{"t":66,"s":[0]}],"ix":3},"m":1,"ix":3,"nm":"Trim Paths 1","mn":"ADBE Vector Filter - Trim","hd":false},{"ty":"tr","p":{"a":0,"k":[0,0],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Shape 3","np":4,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":1,"k":[{"i":{"x":0,"y":1},"o":{"x":0.333,"y":0},"t":59,"s":[{"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-317.097,69.053],[-311.829,69.824],[-317.166,70.505]],"c":false}]},{"t":73,"s":[{"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-320.456,59.05],[-311.901,69.696],[-320.556,80.632]],"c":false}]}],"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"st","c":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":86,"s":[0.019607843831,0.529411792755,0.866666674614,1]},{"t":88,"s":[0.235290527344,0.262756347656,0.290191650391,1]}],"ix":3},"o":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":58,"s":[0]},{"t":59,"s":[100]}],"ix":4},"w":{"a":0,"k":4,"ix":5},"lc":2,"lj":2,"bm":0,"nm":"Stroke 2","mn":"ADBE Vector Graphic - Stroke","hd":false},{"ty":"tm","s":{"a":0,"k":0,"ix":1},"e":{"a":0,"k":100,"ix":2},"o":{"a":0,"k":0,"ix":3},"m":1,"ix":3,"nm":"Trim Paths 1","mn":"ADBE Vector Filter - Trim","hd":false},{"ty":"tr","p":{"a":1,"k":[{"i":{"x":0,"y":1},"o":{"x":0.333,"y":0},"t":56,"s":[-26.667,0],"to":[0,0],"ti":[0,0]},{"t":70,"s":[0,0]}],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":-0.001,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Shape 2","np":4,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false}],"ip":10,"op":326,"st":10,"ct":1,"bm":0},{"ddd":0,"ind":5,"ty":4,"nm":"mask 2","td":1,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[127.558,135.196,0],"ix":2,"l":2},"a":{"a":0,"k":[0,0,0],"ix":1,"l":2},"s":{"a":0,"k":[100,63.748,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ty":"rc","d":1,"s":{"a":0,"k":[69.116,57.893],"ix":2},"p":{"a":0,"k":[0,0],"ix":3},"r":{"a":0,"k":0,"ix":4},"nm":"Rectangle Path 1","mn":"ADBE Vector Shape - Rect","hd":false},{"ty":"fl","c":{"a":0,"k":[0.882323979396,0.882323979396,0.882323979396,1],"ix":4},"o":{"a":0,"k":100,"ix":5},"r":1,"bm":0,"nm":"Fill 1","mn":"ADBE Vector Graphic - Fill","hd":false},{"ty":"tr","p":{"a":0,"k":[0,0],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Rectangle 1","np":3,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false}],"ip":0,"op":316,"st":0,"ct":1,"bm":0},{"ddd":0,"ind":6,"ty":4,"nm":"out","parent":2,"tt":1,"tp":5,"sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[-7.037,55.217,0],"ix":2,"l":2},"a":{"a":0,"k":[-329.625,77.875,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"shapes":[{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":0,"k":{"i":[[0,12.5],[-9.75,0],[0,0]],"o":[[0,-12.5],[9.75,0],[0,0]],"v":[[-347.237,83.84],[-332.5,69.75],[-246.739,69.774]],"c":false},"ix":2},"nm":"Path 2","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"tm","s":{"a":0,"k":0,"ix":1},"e":{"a":0,"k":40,"ix":2},"o":{"a":1,"k":[{"i":{"x":[0.456],"y":[1]},"o":{"x":[0.729],"y":[0]},"t":45,"s":[0]},{"t":58,"s":[199]}],"ix":3},"m":1,"ix":2,"nm":"Trim Paths 1","mn":"ADBE Vector Filter - Trim","hd":false},{"ty":"tr","p":{"a":0,"k":[0,0],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Shape 3","np":3,"cix":2,"bm":0,"ix":1,"mn":"ADBE Vector Group","hd":false},{"ty":"gr","it":[{"ind":0,"ty":"sh","ix":1,"ks":{"a":1,"k":[{"i":{"x":0.456,"y":1},"o":{"x":0.729,"y":0},"t":45,"s":[{"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-320.456,59.05],[-311.901,69.696],[-320.556,80.632]],"c":false}]},{"t":53,"s":[{"i":[[0,0],[0,0],[0,0]],"o":[[0,0],[0,0],[0,0]],"v":[[-318.279,67.379],[-309.651,69.645],[-318.228,71.831]],"c":false}]}],"ix":2},"nm":"Path 1","mn":"ADBE Vector Shape - Group","hd":false},{"ty":"tm","s":{"a":0,"k":0,"ix":1},"e":{"a":0,"k":100,"ix":2},"o":{"a":0,"k":0,"ix":3},"m":1,"ix":2,"nm":"Trim Paths 1","mn":"ADBE Vector Filter - Trim","hd":false},{"ty":"tr","p":{"a":1,"k":[{"i":{"x":0.456,"y":1},"o":{"x":0.729,"y":0},"t":45,"s":[0,0],"to":[0,0],"ti":[0,0]},{"t":58,"s":[63,0]}],"ix":2},"a":{"a":0,"k":[0,0],"ix":1},"s":{"a":0,"k":[100,100],"ix":3},"r":{"a":0,"k":0,"ix":6},"o":{"a":0,"k":100,"ix":7},"sk":{"a":0,"k":0,"ix":4},"sa":{"a":0,"k":0,"ix":5},"nm":"Transform"}],"nm":"Shape 2","np":3,"cix":2,"bm":0,"ix":2,"mn":"ADBE Vector Group","hd":false},{"ty":"st","c":{"a":1,"k":[{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":60,"s":[0.235290527344,0.262756347656,0.290191650391,1]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":62,"s":[0.019607843831,0.529411792755,0.866666674614,1]},{"i":{"x":[0.833],"y":[0.833]},"o":{"x":[0.167],"y":[0.167]},"t":86,"s":[0.019607843831,0.529411792755,0.866666674614,1]},{"t":88,"s":[0.235290527344,0.262756347656,0.290191650391,1]}],"ix":3},"o":{"a":0,"k":100,"ix":4},"w":{"a":0,"k":4,"ix":5},"lc":2,"lj":2,"bm":0,"nm":"Stroke 1","mn":"ADBE Vector Graphic - Stroke","hd":false}],"ip":0,"op":316,"st":0,"ct":1,"bm":0}]}],"layers":[{"ddd":0,"ind":1,"ty":0,"nm":"reply hover 1","refId":"comp_0","sr":1,"ks":{"o":{"a":0,"k":100,"ix":11},"r":{"a":0,"k":0,"ix":10},"p":{"a":0,"k":[88.013,32.5,0],"ix":2,"l":2},"a":{"a":0,"k":[187,133,0],"ix":1,"l":2},"s":{"a":0,"k":[100,100,100],"ix":6,"l":2}},"ao":0,"w":374,"h":266,"ip":0,"op":326,"st":0,"bm":0}],"markers":[],"props":{}}</script>
 <script>
 (function(){
@@ -479,12 +511,12 @@
 
   // interaction — new keyframes: hover-on 11–33 / 102–106 (active) · select 40–74 · deselect 106–122 · hover-off 125–130
   var REST_FOLLOWED=74, REST_IDLE=10, followed=false;   // start switched OFF (not following)
-  function setFollowLabel(){ document.getElementById('follow-lbl').textContent = followed ? 'Following' : 'Follow'; }
+  function setFollowLabel(){ document.getElementById('follow-lbl').textContent = followed ? 'Followed' : 'Follow'; }
   anim.addEventListener('DOMLoaded',function(){ crop(); anim.goToAndStop((followed?REST_FOLLOWED:REST_IDLE)-anim.firstFrame,true); setFollowLabel(); });
   FB.addEventListener('click',function(e){ e.preventDefault();
     if(followed){ anim.playSegments([106,122],true); followed=false; }   // click → unfollow (active → not active)
     else        { anim.playSegments([40,74],true);   followed=true;  }   // click → follow (not active → active)
-    setFollowLabel();   // label follows state: Follow ⇄ Following
+    window.stretchBtn(FB, setFollowLabel);   // label flips Follow ⇄ Followed, width stretches
   });
   FB.addEventListener('mouseenter',function(){ followed ? anim.playSegments([102,106],true) : anim.playSegments([11,33],true); });
   FB.addEventListener('mouseleave',function(){ followed ? anim.goToAndStop(74-anim.firstFrame,true) : anim.playSegments([125,130],true); });
@@ -563,6 +595,7 @@
 
   // interaction — confirmed states (abs frames, offset +16 from ip)
   var selected=false;
+  function setLikeLabel(){ document.getElementById('like-lbl').textContent = selected ? 'Liked' : 'Like'; }
   // likes count + avatar stack react to the like state (the surrounding context, not just the icon)
   var likesEl=document.querySelector('.likes-count');
   function updateLikes(){
@@ -575,6 +608,7 @@
     anim.setSpeed(1);
     if(!selected){ anim.playSegments([75,111],true);  selected=true;  }  // click → like (select)
     else         { anim.playSegments([120,140],true); selected=false; }  // click → unlike (deselect)
+    window.stretchBtn(LB, setLikeLabel);   // 'Like' ⇄ 'Liked' with a fluid width stretch
     updateLikes();   // count 11⇄12 + your avatar joins/leaves the stack
   });
   LB.addEventListener('mouseenter',function(){ if(!selected){ anim.setSpeed(2); anim.playSegments([0,64],true); } });    // hover-on @200%
@@ -761,16 +795,45 @@
   }
   window.likesAvatarToggle=function(on){ if(on && !myAv) flipAdd(); else if(!on && myAv) flipRemove(); };
 
+  // ---- hover "dock" wave: magnify the avatar under the cursor and ripple it out to neighbors ----
+  var W={peak:1.4, spread:2, lift:4, ms:180};
+  var WEASE='cubic-bezier(.34,1.2,.4,1)';
+  function imgs(){ return [].slice.call(avatarsEl.querySelectorAll('img')); }
+  function applyWave(center){
+    imgs().forEach(function(img,i){
+      var d=Math.abs(i-center);
+      var f = W.spread<=0 ? (d===0?1:0) : (d>=W.spread ? 0 : 0.5*(1+Math.cos(Math.PI*d/W.spread)));  // cosine ripple
+      var s = 1 + (W.peak-1)*f;
+      img.style.transition='transform '+W.ms+'ms '+WEASE;
+      img.style.transform='translateY('+(-W.lift*f).toFixed(2)+'px) scale('+s.toFixed(3)+')';
+      img.style.zIndex=String(100-d);                    // hovered sits on top
+    });
+  }
+  function clearWave(){ imgs().forEach(function(img){ img.style.transition='transform '+W.ms+'ms '+WEASE; img.style.transform=''; img.style.zIndex=''; }); }
+  avatarsEl.addEventListener('mousemove',function(e){
+    var arr=imgs(); if(!arr.length) return;
+    var best=0,bd=Infinity;                              // nearest avatar-center to the cursor = the peak
+    arr.forEach(function(img,i){ var r=img.getBoundingClientRect(); var c=r.left+r.width/2; var dd=Math.abs(e.clientX-c); if(dd<bd){bd=dd;best=i;} });
+    applyWave(best);
+  });
+  avatarsEl.addEventListener('mouseleave', clearWave);
+
   // ---- tuner ----
   var C=[
     {k:'appearMs',   label:'New avatar appear (ms)', min:0, max:1000,step:10,  val:200, apply:function(v){P.appearMs=v;}},
     {k:'shiftMs',    label:'Others shift (ms)',      min:0, max:1000,step:10,  val:430, apply:function(v){P.shiftMs=v;}},
     {k:'stagger',    label:'Stagger delay (ms)',     min:0, max:200, step:5,   val:20,  apply:function(v){P.stagger=v;}},
-    {k:'startScale', label:'Appear start scale',     min:0, max:1,   step:0.05,val:0.45,apply:function(v){P.startScale=v;}}
+    {k:'startScale', label:'Appear start scale',     min:0, max:1,   step:0.05,val:0.45,apply:function(v){P.startScale=v;}},
+    {grp:'Hover wave (magnify)'},
+    {k:'wPeak',   label:'Peak scale',   min:1,  max:2.2,step:0.05,val:1.4,apply:function(v){W.peak=v;}},
+    {k:'wSpread', label:'Wave spread',  min:0,  max:5,  step:0.25,val:2,  apply:function(v){W.spread=v;}},
+    {k:'wLift',   label:'Lift (px)',    min:0,  max:24, step:1,   val:4,  apply:function(v){W.lift=v;}},
+    {k:'wMs',     label:'Speed (ms)',   min:40, max:600,step:10,  val:180,apply:function(v){W.ms=v;}}
   ];
   var T=document.getElementById('tuner-avatars');
   T.innerHTML='<h3>Liked-avatars animation</h3>';
   C.forEach(function(c){
+    if(c.grp){ var h=document.createElement('h4'); h.textContent=c.grp; T.appendChild(h); return; }
     var row=document.createElement('div'); row.className='row';
     row.innerHTML='<label>'+c.label+' <b id="av_'+c.k+'">'+c.val+'</b></label>'+
       '<input type="range" id="ar_'+c.k+'" min="'+c.min+'" max="'+c.max+'" step="'+c.step+'" value="'+c.val+'">';
@@ -790,9 +853,78 @@
     if(myAv){ myAv.remove(); myAv=null; } flipAdd();
   });
   document.getElementById('av_reset').addEventListener('click',function(){
-    C.forEach(function(c){ var d={appearMs:200,shiftMs:430,stagger:20,startScale:0.45}[c.k];
+    C.forEach(function(c){ if(!c.k) return;
+      var d={appearMs:200,shiftMs:430,stagger:20,startScale:0.45,wPeak:1.4,wSpread:2,wLift:4,wMs:180}[c.k];
       c.val=d; document.getElementById('ar_'+c.k).value=d; document.getElementById('av_'+c.k).textContent=d; c.apply(d); });
   });
+})();
+</script>
+
+<!-- ===== Label FX: control the width-stretch when a toggle's label changes ===== -->
+<button id="tuner-toggle-labelfx" class="tuner-toggle" title="Label stretch FX">Label FX ⚙</button>
+<div id="tuner-labelfx" class="tuner" hidden></div>
+<script>
+(function(){
+  // button press: uniform scale-down on :active. depthPct% → scale(1 − depth/100)
+  function setPress(depthPct){ document.documentElement.style.setProperty('--press', (1 - depthPct/100).toFixed(3)); }
+  setPress(4);
+
+  var T=document.getElementById('tuner-labelfx');
+  T.innerHTML='<h3>Label stretch</h3><div style="font-size:11px;color:#787c82;line-height:1.4;margin:-4px 0 10px">Width motion when Follow→Followed / Like→Liked, plus the button press depth.</div>';
+  function slider(label,min,max,step,val,unit,on){ var r=document.createElement('div'); r.className='row';
+    r.innerHTML='<label>'+label+' <b>'+val+unit+'</b></label><input type="range" min="'+min+'" max="'+max+'" step="'+step+'" value="'+val+'">';
+    var inp=r.querySelector('input'),out=r.querySelector('b');
+    inp.addEventListener('input',function(){ var v=parseFloat(inp.value); out.textContent=v+unit; on(v); }); T.appendChild(r); }
+  slider('Duration',80,800,10,window.STRETCH.ms,'ms',function(v){ window.STRETCH.ms=v; });
+  slider('Bounce (overshoot)',1,1.8,0.05,window.STRETCH.bounce,'',function(v){ window.STRETCH.bounce=v; });
+  slider('Press depth',0,15,0.5,4,'%',function(v){ setPress(v); });
+  var btns=document.createElement('div'); btns.className='btns';
+  btns.innerHTML='<button id="lfx_reset">Reset</button>';
+  T.appendChild(btns);
+  document.getElementById('lfx_reset').addEventListener('click',function(){
+    window.STRETCH.ms=260; window.STRETCH.bounce=1.35; setPress(4);
+    var rs=T.querySelectorAll('input[type=range]'), bs=T.querySelectorAll('.row b');
+    rs[0].value=260; bs[0].textContent='260ms'; rs[1].value=1.35; bs[1].textContent='1.35'; rs[2].value=4; bs[2].textContent='4%';
+  });
+  document.getElementById('tuner-toggle-labelfx').addEventListener('click',function(){ var show=T.hidden; document.querySelectorAll('.tuner').forEach(function(p){p.hidden=true;}); if(show) T.hidden=false; });
+})();
+</script>
+
+<!-- ===== Likers dropdown: click the "N likes" count to list everyone who liked ===== -->
+<script>
+(function(){
+  var likesEl=document.querySelector('.likes-count');
+  var row=document.querySelector('.o2-likes');
+  if(!likesEl||!row) return;
+  row.style.position='relative';
+  var YOU={n:'Nebojsa Jurcic (you)', a:'https://i.pravatar.cc/76?img=15'};
+  var LIKERS=[
+    {n:'Filipe Varela',      a:'https://i.pravatar.cc/76?img=12'},
+    {n:'Kelly Hoffman',      a:'https://i.pravatar.cc/76?img=45'},
+    {n:'admwgn',             a:'https://i.pravatar.cc/76?img=33'},
+    {n:'archiesessions',     a:'https://i.pravatar.cc/76?img=13'},
+    {n:'Wagner Veloso',      a:'https://i.pravatar.cc/76?img=60'},
+    {n:'Craig Mangum',       a:'https://i.pravatar.cc/76?img=8'},
+    {n:'Eduardo Villuendas', a:'https://i.pravatar.cc/76?img=52'},
+    {n:'Mia Hansen',         a:'https://i.pravatar.cc/76?img=32'},
+    {n:'Diego Alvarez',      a:'https://i.pravatar.cc/76?img=11'},
+    {n:'Aisha Khan',         a:'https://i.pravatar.cc/76?img=9'},
+    {n:'Lena Petrova',       a:'https://i.pravatar.cc/76?img=51'}
+  ];
+  var pop=document.createElement('div'); pop.className='likes-pop'; pop.hidden=true; row.appendChild(pop);
+  function esc(s){ return s.replace(/</g,'&lt;'); }
+  function build(){
+    var count=parseInt(likesEl.textContent,10)||LIKERS.length;
+    var liked=count>LIKERS.length;                                  // your like pushes it past the base list
+    var people=(liked?[YOU].concat(LIKERS):LIKERS).slice(0,count);
+    var html='<div class="likes-pop-h">'+count+' likes</div>';
+    people.forEach(function(p){ html+='<div class="lp-row"><img src="'+p.a+'" alt=""><span>'+esc(p.n)+'</span></div>'; });
+    pop.innerHTML=html;
+  }
+  likesEl.addEventListener('click',function(e){ e.preventDefault();
+    if(pop.hidden){ build(); pop.hidden=false; } else { pop.hidden=true; } });
+  document.addEventListener('click',function(e){ if(!pop.hidden && e.target!==likesEl && !pop.contains(e.target)) pop.hidden=true; });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') pop.hidden=true; });
 })();
 </script>
 
