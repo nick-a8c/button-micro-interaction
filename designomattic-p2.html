@@ -622,12 +622,18 @@ window.stretchBtn=function(btn, mutate){
   }
   // goToAndStop(f,true) is relative to firstFrame → use absFrame−firstFrame to rest on an absolute frame
   anim.addEventListener('DOMLoaded',function(){ crop(); anim.goToAndStop((selected?111:0)-anim.firstFrame,true); setLikeLabel(); });
+  // the reaction (button width + avatar/count shift) lags the click by REACT.ms — the star fires immediately
+  var REACT={ms:190}, reactT=null;
   LB.addEventListener('click',function(e){ e.preventDefault();
     anim.setSpeed(1);
     if(!selected){ anim.playSegments([75,111],true);  selected=true;  }  // click → like (select)
     else         { anim.playSegments([120,140],true); selected=false; }  // click → unlike (deselect)
-    window.stretchBtn(LB, setLikeLabel);   // 'Like' ⇄ 'Liked' with a fluid width stretch
-    updateLikes();   // count 11⇄12 + your avatar joins/leaves the stack
+    function react(){
+      window.stretchBtn(LB, setLikeLabel);   // 'Like' ⇄ 'Liked' with a fluid width stretch
+      updateLikes();                         // count 48⇄49 + your avatar joins/leaves the stack
+    }
+    clearTimeout(reactT);                    // a fast re-click supersedes a pending reaction
+    if(REACT.ms>0) reactT=setTimeout(react,REACT.ms); else react();
   });
   LB.addEventListener('mouseenter',function(){ if(!selected){ anim.setSpeed(2); anim.playSegments([0,64],true); } });    // hover-on @200%
   LB.addEventListener('mouseleave',function(){ if(!selected){ anim.setSpeed(1); anim.playSegments([142,168],true); } }); // hover-off @100%
@@ -651,7 +657,9 @@ window.stretchBtn=function(btn, mutate){
     {grp:'Spacing'},
     {k:'icoGap',  label:'Icon ↔ label gap',    min:-20,max:30, step:1,  val:-5, apply:function(v){ICO.style.marginRight=v+'px';}},
     {k:'padR',    label:'Label right padding',      min:0,  max:32, step:1,  val:12, apply:function(v){LB.style.paddingRight=v+'px';}},
-    {k:'lblY',    label:'Label vertical pos',       min:-12,max:12, step:1,  val:0,  apply:function(v){document.getElementById('like-lbl').style.transform='translateY('+v+'px)';}}
+    {k:'lblY',    label:'Label vertical pos',       min:-12,max:12, step:1,  val:0,  apply:function(v){document.getElementById('like-lbl').style.transform='translateY('+v+'px)';}},
+    {grp:'Reaction'},
+    {k:'reactDelay', label:'Reaction delay (ms)',   min:0,  max:800,step:10, val:190,apply:function(v){REACT.ms=v;}}
   ];
 
   var T=document.getElementById('tuner-like');
@@ -674,14 +682,14 @@ window.stretchBtn=function(btn, mutate){
   document.getElementById('tuner-toggle-like').addEventListener('click',function(){ var show=T.hidden; document.querySelectorAll('.tuner').forEach(function(p){p.hidden=true;}); if(show) T.hidden=false; });
   document.getElementById('lt_copy').addEventListener('click',function(){
     var txt=C.filter(function(c){return c.k;}).map(function(c){
-      return c.label+': '+c.val+(c.k==='stroke'||c.k.indexOf('crop')===0?'':'px'); }).join('\n');
+      return c.label+': '+c.val+(c.k==='stroke'||c.k==='reactDelay'||c.k.indexOf('crop')===0?'':'px'); }).join('\n');
     navigator.clipboard&&navigator.clipboard.writeText(txt);
     this.textContent='Copied!'; var b=this; setTimeout(function(){b.textContent='Copy settings';},1200);
   });
   document.getElementById('lt_reset').addEventListener('click',function(){
     C.forEach(function(c){ if(!c.k) return;
       var d={btnW:0,btnH:32,icoSize:31,icoPadL:0,icoPadR:0,icoY:-2,icoX:-9,stroke:4.5,
-             cropX:-2,cropY:-8,cropW:64,cropH:69,icoGap:-5,padR:12,lblY:0}[c.k];
+             cropX:-2,cropY:-8,cropW:64,cropH:69,icoGap:-5,padR:12,lblY:0,reactDelay:190}[c.k];
       c.val=d; document.getElementById('lr_'+c.k).value=d; document.getElementById('lv_'+c.k).textContent=d; c.apply(d); });
   });
 })();
@@ -802,28 +810,43 @@ window.stretchBtn=function(btn, mutate){
       myAv.style.transform=''; myAv.style.opacity='1';
     });
   }
+  // exact mirror of flipAdd: the gap closes WHILE the avatar scales out (same ease, duration, stagger).
+  // The leaver is lifted out of the flow into a pinned overlay so nothing waits on it.
   function flipRemove(){
     var rm=myAv; myAv=null;
-    rm.style.transition='transform '+P.appearMs+'ms '+EASE+', opacity '+Math.round(P.appearMs*0.7)+'ms ease';
-    requestAnimationFrame(function(){ rm.style.transform='scale('+P.startScale+')'; rm.style.opacity='0'; });
-    setTimeout(function(){                                // then close the gap (others slide left, staggered)
-      var kids=[].slice.call(avatarsEl.children).filter(function(el){return el!==rm;});
-      var oldL=kids.map(function(el){return el.getBoundingClientRect().left;});
-      var oldCL=likesEl?likesEl.getBoundingClientRect().left:0;
-      if(rm.parentNode) rm.remove();
-      kids.forEach(function(el,i){ var dx=oldL[i]-el.getBoundingClientRect().left; el.style.transition='none'; el.style.transform='translateX('+dx+'px)'; });
-      if(likesEl){ var dxc=oldCL-likesEl.getBoundingClientRect().left; likesEl.style.transition='none'; likesEl.style.transform='translateX('+dxc+'px)'; }
-      avatarsEl.offsetWidth;
-      kids.forEach(function(el,i){ el.style.transition='transform '+P.shiftMs+'ms '+EASE+' '+(i*P.stagger)+'ms'; el.style.transform=''; });
-      if(likesEl){ likesEl.style.transition='transform '+P.shiftMs+'ms '+EASE+' '+(kids.length*P.stagger)+'ms'; likesEl.style.transform=''; }
-    }, P.appearMs);
+    var kids=[].slice.call(avatarsEl.children).filter(function(el){return el!==rm;});
+    var oldL=kids.map(function(el){return el.getBoundingClientRect().left;});
+    var oldCL=likesEl?likesEl.getBoundingClientRect().left:0;
+    var pr=avatarsEl.getBoundingClientRect(), rr=rm.getBoundingClientRect();
+    rm.remove();                                          // out of the flow → the stack's final layout is settled now
+    avatarsEl.style.position='relative';
+    rm.className='leaving';                               // excluded from the hover wave
+    rm.style.cssText='position:absolute;margin:0;z-index:1;left:'+(rr.left-pr.left)+'px;top:'+(rr.top-pr.top)+'px;'+
+                     'width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid var(--avatar-ring);';
+    avatarsEl.appendChild(rm);                            // re-attached last → never :first-child, so no 8px jump on cleanup
+    kids.forEach(function(el,i){                          // INVERT to their old spot
+      var dx=oldL[i]-el.getBoundingClientRect().left;
+      el.style.transition='none'; el.style.transform='translateX('+dx+'px)';
+    });
+    if(likesEl){ var dxc=oldCL-likesEl.getBoundingClientRect().left; likesEl.style.transition='none'; likesEl.style.transform='translateX('+dxc+'px)'; }
+    avatarsEl.offsetWidth;                                // reflow
+    kids.forEach(function(el,i){                          // PLAY: shift left, staggered
+      el.style.transition='transform '+P.shiftMs+'ms '+EASE+' '+(i*P.stagger)+'ms';
+      el.style.transform='';
+    });
+    if(likesEl){ likesEl.style.transition='transform '+P.shiftMs+'ms '+EASE+' '+(kids.length*P.stagger)+'ms'; likesEl.style.transform=''; }
+    requestAnimationFrame(function(){                     // …and the leaver scales out on top, in parallel
+      rm.style.transition='transform '+P.appearMs+'ms '+EASE+', opacity '+Math.round(P.appearMs*0.7)+'ms ease';
+      rm.style.transform='scale('+P.startScale+')'; rm.style.opacity='0';
+    });
+    setTimeout(function(){ if(rm.parentNode) rm.remove(); avatarsEl.style.position=''; }, P.appearMs+80);
   }
   window.likesAvatarToggle=function(on){ if(on && !myAv) flipAdd(); else if(!on && myAv) flipRemove(); };
 
   // ---- hover "dock" wave: magnify the avatar under the cursor and ripple it out to neighbors ----
   var W={peak:1.05, spread:2.25, lift:2, ms:350};
   var WEASE='cubic-bezier(.34,1.2,.4,1)';
-  function imgs(){ return [].slice.call(avatarsEl.querySelectorAll('img')); }
+  function imgs(){ return [].slice.call(avatarsEl.querySelectorAll('img:not(.leaving)')); }
   function applyWave(center){
     imgs().forEach(function(img,i){
       var d=Math.abs(i-center);
